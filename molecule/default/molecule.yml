@@ -1,0 +1,15 @@
+---
+# Syntax-only scenario: a meaningful converge needs a physical Zigbee coordinator
+# (the service can't stay up without one) and a heavy pnpm build, so `molecule
+# syntax` runs ansible-playbook --syntax-check against converge.yml and creates
+# nothing. End-to-end is verified manually against a live host.
+dependency:
+  name: galaxy
+driver:
+  name: default
+platforms:
+  - name: zigbee2mqtt-noop
+provisioner:
+  name: ansible
+verifier:
+  name: ansible

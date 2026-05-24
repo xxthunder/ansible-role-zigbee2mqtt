@@ -1,0 +1,27 @@
+---
+galaxy_info:
+  role_name: zigbee2mqtt
+  namespace: xxthunder
+  author: xxthunder
+  description: >-
+    Zigbee2MQTT on Debian — pinned native install (git + pnpm build), a templated
+    configuration.yaml, and a systemd service.
+  company: xxthunder
+  license: MIT
+  # argument_specs.yml requires the role-arg validation introduced in 2.11.
+  min_ansible_version: "2.11"
+
+  platforms:
+    - name: Debian
+      versions:
+        - bookworm
+        - trixie
+
+  galaxy_tags:
+    - zigbee
+    - zigbee2mqtt
+    - mqtt
+    - iot
+    - homeautomation
+
+dependencies: []

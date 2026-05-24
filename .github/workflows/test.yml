@@ -1,0 +1,65 @@
+---
+name: CI
+"on":
+  push:
+    branches:
+      - main
+  pull_request:
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: "zigbee2mqtt"
+
+jobs:
+  lint:
+    name: ansible-lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the codebase
+        uses: actions/checkout@v4
+        with:
+          path: "zigbee2mqtt"
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Install test dependencies
+        run: pip3 install ansible-core ansible-lint
+
+      - name: Run ansible-lint
+        run: ansible-lint
+        env:
+          ANSIBLE_ROLES_PATH: ".."
+
+  syntax:
+    name: molecule syntax
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the codebase
+        uses: actions/checkout@v4
+        with:
+          path: "zigbee2mqtt"
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Install test dependencies
+        # A full converge needs a coordinator + a heavy pnpm build, so this
+        # scenario is syntax-only (see README).
+        run: pip3 install ansible-core molecule
+
+      - name: Run molecule syntax-check
+        run: molecule syntax
+        env:
+          # Absolute path to the checkout root (which contains the "zigbee2mqtt"
+          # role dir) so the role resolves regardless of molecule's cwd.
+          ANSIBLE_ROLES_PATH: ${{ github.workspace }}
+          ANSIBLE_FORCE_COLOR: "1"
+          PY_COLORS: "1"

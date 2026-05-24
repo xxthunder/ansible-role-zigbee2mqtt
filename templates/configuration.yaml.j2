@@ -1,0 +1,21 @@
+# Managed by ansible-role-zigbee2mqtt — do not edit by hand.
+homeassistant:
+  enabled: {{ zigbee2mqtt_homeassistant | ternary('true', 'false') }}
+frontend:
+  enabled: {{ zigbee2mqtt_frontend_enabled | ternary('true', 'false') }}
+  port: {{ zigbee2mqtt_frontend_port }}
+  host: {{ zigbee2mqtt_frontend_host }}
+mqtt:
+  base_topic: {{ zigbee2mqtt_mqtt_base_topic }}
+  server: {{ zigbee2mqtt_mqtt_server }}
+  user: {{ zigbee2mqtt_mqtt_user }}
+  password: {{ zigbee2mqtt_mqtt_password }}
+serial:
+  port: {{ zigbee2mqtt_serial_port }}
+  adapter: {{ zigbee2mqtt_serial_adapter }}
+advanced:
+  log_level: {{ zigbee2mqtt_log_level }}
+  channel: {{ zigbee2mqtt_channel }}
+  network_key: {{ zigbee2mqtt_network_key }}
+  pan_id: {{ zigbee2mqtt_pan_id }}
+  ext_pan_id: {{ zigbee2mqtt_ext_pan_id }}

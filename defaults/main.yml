@@ -1,0 +1,41 @@
+---
+# Version (git tag) of Zigbee2MQTT to deploy. Bump deliberately.
+zigbee2mqtt_version: "2.10.1"
+zigbee2mqtt_repo: "https://github.com/Koenkk/zigbee2mqtt.git"
+
+# Install layout. The source tree (base_dir) is root-owned and read by the
+# service user; the data dir (config + state) is owned by the service user.
+zigbee2mqtt_user: zigbee2mqtt
+zigbee2mqtt_group: zigbee2mqtt
+zigbee2mqtt_base_dir: /opt/zigbee2mqtt
+zigbee2mqtt_data_dir: /opt/zigbee2mqtt/data
+zigbee2mqtt_service: zigbee2mqtt
+
+# Coordinator serial — use a stable /dev/serial/by-id/... path. Required.
+# Adapter: zstack for TI CC2652 (e.g. Sonoff ZBDongle-P); ember for EFR32 (-E).
+zigbee2mqtt_serial_port: ""
+zigbee2mqtt_serial_adapter: "zstack"
+
+# Zigbee network. Set the channel BEFORE first pairing — changing it later
+# forces re-pairing every device.
+zigbee2mqtt_channel: 20
+zigbee2mqtt_network_key: "GENERATE"
+zigbee2mqtt_pan_id: "GENERATE"
+zigbee2mqtt_ext_pan_id: "GENERATE"
+
+# MQTT broker. Required user/password — supply via the consumer's vault.
+zigbee2mqtt_mqtt_server: "mqtt://localhost:1883"
+zigbee2mqtt_mqtt_base_topic: "zigbee2mqtt"
+zigbee2mqtt_mqtt_user: ""
+zigbee2mqtt_mqtt_password: ""
+
+# Web frontend.
+zigbee2mqtt_frontend_enabled: true
+zigbee2mqtt_frontend_port: 8080
+zigbee2mqtt_frontend_host: "0.0.0.0"
+
+# Home Assistant MQTT discovery (leave off unless HA also consumes the bus).
+zigbee2mqtt_homeassistant: false
+
+# Logging.
+zigbee2mqtt_log_level: info

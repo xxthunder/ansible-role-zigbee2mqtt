@@ -1,0 +1,111 @@
+---
+# Role argument spec for zigbee2mqtt. Validated at role start. Structural defaults
+# live in defaults/main.yml (values not restated here, to avoid drift).
+#
+# Requires ansible-core >= 2.11.
+
+argument_specs:
+  main:
+    short_description: Zigbee2MQTT on Debian (native install + systemd).
+    description:
+      - Installs Zigbee2MQTT from git at a pinned tag (pnpm build), templates
+        configuration.yaml, and manages the systemd service. See README.md.
+    options:
+
+      # --- Required (set in the consumer's vars / vault) ---------------------
+
+      zigbee2mqtt_serial_port:
+        type: str
+        required: true
+        description:
+          - Coordinator serial path. Use a stable /dev/serial/by-id/... entry,
+            never /dev/ttyUSBx.
+
+      zigbee2mqtt_mqtt_user:
+        type: str
+        required: true
+        description: MQTT username for the broker.
+
+      zigbee2mqtt_mqtt_password:
+        type: str
+        required: true
+        no_log: true
+        description: MQTT password (supply via vault).
+
+      # --- Structural defaults (defaults/main.yml owns the values) -----------
+
+      zigbee2mqtt_version:
+        type: str
+        description: Zigbee2MQTT git tag to deploy.
+
+      zigbee2mqtt_repo:
+        type: str
+        description: Zigbee2MQTT git repository URL.
+
+      zigbee2mqtt_user:
+        type: str
+        description: Service user.
+
+      zigbee2mqtt_group:
+        type: str
+        description: Service group.
+
+      zigbee2mqtt_base_dir:
+        type: str
+        description: Source/build directory (root-owned, read by the service).
+
+      zigbee2mqtt_data_dir:
+        type: str
+        description: Config/state directory (owned by the service user).
+
+      zigbee2mqtt_service:
+        type: str
+        description: systemd service name.
+
+      zigbee2mqtt_serial_adapter:
+        type: str
+        description: Coordinator adapter (e.g. zstack for CC2652, ember for EFR32).
+
+      zigbee2mqtt_channel:
+        type: int
+        description: Zigbee channel — fix before first pairing.
+
+      zigbee2mqtt_network_key:
+        type: raw
+        description: Network key, or "GENERATE".
+
+      zigbee2mqtt_pan_id:
+        type: raw
+        description: PAN ID, or "GENERATE".
+
+      zigbee2mqtt_ext_pan_id:
+        type: raw
+        description: Extended PAN ID, or "GENERATE".
+
+      zigbee2mqtt_mqtt_server:
+        type: str
+        description: MQTT broker URL (e.g. mqtt://localhost:1883).
+
+      zigbee2mqtt_mqtt_base_topic:
+        type: str
+        description: MQTT base topic.
+
+      zigbee2mqtt_frontend_enabled:
+        type: bool
+        description: Enable the web frontend.
+
+      zigbee2mqtt_frontend_port:
+        type: int
+        description: Frontend TCP port.
+
+      zigbee2mqtt_frontend_host:
+        type: str
+        description: Frontend bind address.
+
+      zigbee2mqtt_homeassistant:
+        type: bool
+        description: Enable Home Assistant MQTT discovery.
+
+      zigbee2mqtt_log_level:
+        type: str
+        description: Zigbee2MQTT log level.

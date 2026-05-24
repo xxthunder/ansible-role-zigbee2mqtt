@@ -1,0 +1,14 @@
+---
+# Exercised by `molecule syntax` (syntax-check only — see molecule.yml). Doubles
+# as a worked example of the role's required variables.
+- name: Converge
+  hosts: all
+  become: true
+  tasks:
+    - name: Install and configure Zigbee2MQTT
+      ansible.builtin.include_role:
+        name: zigbee2mqtt
+      vars:
+        zigbee2mqtt_serial_port: "/dev/serial/by-id/usb-Example_Zigbee_Dongle-if00-port0"
+        zigbee2mqtt_mqtt_user: zigbee2mqtt
+        zigbee2mqtt_mqtt_password: example

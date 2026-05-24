@@ -1,0 +1,19 @@
+[Unit]
+Description=Zigbee2MQTT
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Environment=ZIGBEE2MQTT_DATA={{ zigbee2mqtt_data_dir }}
+ExecStart=/usr/bin/node index.js
+WorkingDirectory={{ zigbee2mqtt_base_dir }}
+StandardOutput=journal
+StandardError=journal
+Type=notify
+WatchdogSec=30s
+Restart=on-failure
+User={{ zigbee2mqtt_user }}
+Group={{ zigbee2mqtt_group }}
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,101 @@
+---
+# zigbee2mqtt — native install of Zigbee2MQTT on Debian (git + pnpm build) with a
+# templated configuration.yaml and a systemd service. Runs as root (set become
+# in the consuming play). The service connects to the coordinator on first
+# start, so a working serial port and MQTT broker are needed for it to stay up.
+
+- name: Install prerequisites
+  ansible.builtin.apt:
+    name:
+      - nodejs
+      - npm
+      - git
+      - build-essential
+      - python3
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Install pnpm globally
+  ansible.builtin.command: npm install -g pnpm
+  args:
+    creates: /usr/local/bin/pnpm
+
+- name: Create the zigbee2mqtt group
+  ansible.builtin.group:
+    name: "{{ zigbee2mqtt_group }}"
+    system: true
+
+- name: Create the zigbee2mqtt user
+  ansible.builtin.user:
+    name: "{{ zigbee2mqtt_user }}"
+    group: "{{ zigbee2mqtt_group }}"
+    groups: dialout
+    append: true
+    system: true
+    home: "{{ zigbee2mqtt_base_dir }}"
+    create_home: false
+    shell: /usr/sbin/nologin
+
+- name: Create base and data directories
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: directory
+    owner: "{{ item.owner }}"
+    group: "{{ zigbee2mqtt_group }}"
+    mode: "{{ item.mode }}"
+  loop:
+    - { path: "{{ zigbee2mqtt_base_dir }}", owner: root, mode: "0755" }
+    - { path: "{{ zigbee2mqtt_data_dir }}", owner: "{{ zigbee2mqtt_user }}", mode: "0750" }
+
+- name: Check out Zigbee2MQTT at the pinned version
+  ansible.builtin.git:
+    repo: "{{ zigbee2mqtt_repo }}"
+    dest: "{{ zigbee2mqtt_base_dir }}"
+    version: "{{ zigbee2mqtt_version }}"
+    depth: 1
+  register: zigbee2mqtt_src
+  notify: Restart zigbee2mqtt
+
+- name: Install Zigbee2MQTT dependencies  # noqa: no-handler
+  # Must run in-order after checkout and before the service starts, so it is a
+  # change-gated task, not an end-of-play handler.
+  ansible.builtin.command:
+    cmd: pnpm install --frozen-lockfile
+    chdir: "{{ zigbee2mqtt_base_dir }}"
+  when: zigbee2mqtt_src is changed
+  changed_when: true
+  notify: Restart zigbee2mqtt
+
+- name: Build Zigbee2MQTT  # noqa: no-handler
+  ansible.builtin.command:
+    cmd: pnpm build
+    chdir: "{{ zigbee2mqtt_base_dir }}"
+  when: zigbee2mqtt_src is changed
+  changed_when: true
+  notify: Restart zigbee2mqtt
+
+- name: Deploy configuration.yaml
+  ansible.builtin.template:
+    src: configuration.yaml.j2
+    dest: "{{ zigbee2mqtt_data_dir }}/configuration.yaml"
+    owner: "{{ zigbee2mqtt_user }}"
+    group: "{{ zigbee2mqtt_group }}"
+    mode: "0640"
+  notify: Restart zigbee2mqtt
+
+- name: Install the systemd unit
+  ansible.builtin.template:
+    src: zigbee2mqtt.service.j2
+    dest: "/etc/systemd/system/{{ zigbee2mqtt_service }}.service"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart zigbee2mqtt
+
+- name: Enable and start Zigbee2MQTT
+  ansible.builtin.systemd:
+    name: "{{ zigbee2mqtt_service }}"
+    enabled: true
+    state: started
+    daemon_reload: true
