@@ -58,13 +58,20 @@
     mode: "0644"
 
 - name: Install nodejs (from NodeSource — includes npm)
+  # state: latest is deliberate: on a system that already has Debian's
+  # nodejs installed (e.g. from a previous run of this role at v1.1.0 or
+  # an earlier provisioning), state: present sees "nodejs already there"
+  # and won't upgrade across the Debian → NodeSource source boundary,
+  # leaving Node 20 in place — too old for z2m 2.x. state: latest forces
+  # the upgrade to the highest-priority source (NodeSource 22.x), then
+  # tracks 22.x patch releases on subsequent runs.
   # update_cache here picks up the NodeSource source above on the same run
-  # without needing a separate refresh task. cache_valid_time:0 forces a
-  # refresh in case the previous "Install build prerequisites" task's cache
-  # is fresh but predates the NodeSource entry.
+  # without a separate refresh task; cache_valid_time:0 forces a refresh
+  # in case the previous "Install build prerequisites" task's cache is
+  # fresh but predates the NodeSource entry.
   ansible.builtin.apt:
     name: nodejs
-    state: present
+    state: latest  # noqa: package-latest
     update_cache: true
     cache_valid_time: 0
 
@@ -121,13 +128,28 @@
     group: "{{ zigbee2mqtt_group }}"
     mode: "0750"
 
+# Detect whether a prior install/build completed. "src unchanged" alone is
+# not a safe proxy: a previous run could have cloned successfully but failed
+# at pnpm install (e.g. wrong Node version), leaving the tree without
+# node_modules/dist. Re-run install/build whenever src changed OR the
+# expected output is missing.
+- name: Stat node_modules
+  ansible.builtin.stat:
+    path: "{{ zigbee2mqtt_base_dir }}/node_modules"
+  register: zigbee2mqtt_node_modules
+
+- name: Stat build output
+  ansible.builtin.stat:
+    path: "{{ zigbee2mqtt_base_dir }}/dist"
+  register: zigbee2mqtt_dist
+
 - name: Install Zigbee2MQTT dependencies  # noqa: no-handler
   # Must run in-order after checkout and before the service starts, so it is a
   # change-gated task, not an end-of-play handler.
   ansible.builtin.command:
     cmd: pnpm install --frozen-lockfile
     chdir: "{{ zigbee2mqtt_base_dir }}"
-  when: zigbee2mqtt_src is changed
+  when: zigbee2mqtt_src is changed or not zigbee2mqtt_node_modules.stat.exists
   changed_when: true
   notify: Restart zigbee2mqtt
 
@@ -152,7 +174,7 @@
   ansible.builtin.command:
     cmd: pnpm build
     chdir: "{{ zigbee2mqtt_base_dir }}"
-  when: zigbee2mqtt_src is changed
+  when: zigbee2mqtt_src is changed or not zigbee2mqtt_dist.stat.exists
   changed_when: true
   notify: Restart zigbee2mqtt
 
