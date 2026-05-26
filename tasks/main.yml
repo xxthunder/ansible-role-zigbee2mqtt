@@ -15,19 +15,63 @@
       zigbee2mqtt_frontend_ssl_cert and zigbee2mqtt_frontend_ssl_key must
       either both be set (HTTPS) or both empty (HTTP) — not one of each.
 
-- name: Install prerequisites
+- name: Install build prerequisites (without nodejs/npm — see NodeSource below)
   ansible.builtin.apt:
     name:
-      - nodejs
-      - npm
       - git
       - build-essential
       - python3
+      - ca-certificates
+      - curl
+      - gnupg
     state: present
     update_cache: true
     cache_valid_time: 3600
 
+# Node.js comes from NodeSource (deb.nodesource.com), not Debian. Z2M 2.x
+# requires Node 22+ and Debian 13 ships Node 20. This is the same path the
+# upstream z2m install guide recommends. The keyring lives in /etc/apt/keyrings
+# (the modern signed-by convention; apt-key is deprecated).
+- name: Ensure /etc/apt/keyrings exists
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: NodeSource signing key
+  ansible.builtin.get_url:
+    url: https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key
+    dest: /etc/apt/keyrings/nodesource.asc
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: NodeSource apt source
+  ansible.builtin.copy:
+    dest: /etc/apt/sources.list.d/nodesource.list
+    content: |
+      deb [signed-by=/etc/apt/keyrings/nodesource.asc] https://deb.nodesource.com/node_{{ zigbee2mqtt_node_major }}.x nodistro main
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Install nodejs (from NodeSource — includes npm)
+  # update_cache here picks up the NodeSource source above on the same run
+  # without needing a separate refresh task. cache_valid_time:0 forces a
+  # refresh in case the previous "Install build prerequisites" task's cache
+  # is fresh but predates the NodeSource entry.
+  ansible.builtin.apt:
+    name: nodejs
+    state: present
+    update_cache: true
+    cache_valid_time: 0
+
 - name: Install pnpm globally
+  # NodeSource's nodejs ships with npm, so this works without the Debian npm
+  # package. Don't pin pnpm — npm picks the latest version compatible with the
+  # installed Node (Node major is the variable we control).
   ansible.builtin.command: npm install -g pnpm
   args:
     creates: /usr/local/bin/pnpm

@@ -3,6 +3,12 @@
 zigbee2mqtt_version: "2.10.1"
 zigbee2mqtt_repo: "https://github.com/Koenkk/zigbee2mqtt.git"
 
+# Node.js major version installed from NodeSource. Z2M 2.x requires Node 22+;
+# Debian 13 trixie ships Node 20, so the distro package is too old. NodeSource
+# (deb.nodesource.com) is what z2m's own install guide uses. Bump deliberately;
+# z2m may track newer Node faster than this default does.
+zigbee2mqtt_node_major: "22"
+
 # Install layout. base_dir holds the cloned Zigbee2MQTT source tree + pnpm
 # build artefacts (root-owned, read by the service user). data_dir is the
 # runtime state — configuration.yaml, devices.yaml, the SQLite database,
