@@ -65,6 +65,15 @@ at role start.
 > `zigbee2mqtt_frontend_ssl_cert`/`_key` for the HTTPS frontend). HTTPS is
 > enabled by the *presence* of both frontend paths — empty both = HTTP.
 
+> **Supply-chain note:** the role runs `pnpm audit --audit-level=high`
+> after the dependency install and prints the summary, non-blocking. With
+> `--frozen-lockfile` every transitive dep is pinned to whatever z2m
+> committed at the pinned tag, so the role won't *change* what's installed
+> between runs without a `zigbee2mqtt_version` bump — but `audit` surfaces
+> CVEs disclosed *since* that tag was cut, giving you a paper trail in
+> the play output. A real response is bumping `zigbee2mqtt_version` after
+> reviewing the lockfile diff.
+
 
 ## Example Playbook
 
