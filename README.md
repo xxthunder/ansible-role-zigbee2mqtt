@@ -47,7 +47,7 @@ git tag and run it under systemd. The role:
 | `zigbee2mqtt_frontend_enabled` / `_port` / `_host` | `true` / `8080` / `0.0.0.0` | Web frontend. |
 | `zigbee2mqtt_frontend_ssl_cert` / `_ssl_key` | `""` / `""` | Set both to enable HTTPS; leave both empty for HTTP. |
 | `zigbee2mqtt_homeassistant` | `false` | Home Assistant MQTT discovery. |
-| `zigbee2mqtt_base_dir` / `_data_dir` | `/opt/zigbee2mqtt` / `/opt/zigbee2mqtt/data` | Source / state dirs. |
+| `zigbee2mqtt_base_dir` / `_data_dir` | `/opt/zigbee2mqtt/base` / `/opt/zigbee2mqtt/data` | Source clone / runtime state. Siblings, not parent/child. |
 
 `meta/argument_specs.yml` is the authoritative variable surface and is validated
 at role start.
@@ -61,6 +61,7 @@ at role start.
 > variables at them (`zigbee2mqtt_mqtt_ca` for broker validation,
 > `zigbee2mqtt_frontend_ssl_cert`/`_key` for the HTTPS frontend). HTTPS is
 > enabled by the *presence* of both frontend paths — empty both = HTTP.
+
 
 ## Example Playbook
 
