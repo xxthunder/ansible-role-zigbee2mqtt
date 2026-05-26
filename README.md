@@ -18,8 +18,10 @@ git tag and run it under systemd. The role:
 
 ## Requirements
 
-- A Debian host (bookworm/trixie) with `systemd` and Node.js 20+ available via
-  apt.
+- A Debian host (bookworm/trixie) with `systemd`. Node.js is installed by the
+  role from NodeSource (`deb.nodesource.com`) at `zigbee2mqtt_node_major`
+  (default `22`) — Z2M 2.x requires Node 22+ and the distro packages on
+  bookworm/trixie are too old.
 - A reachable **MQTT broker** (`zigbee2mqtt_mqtt_server`) with credentials.
 - A Zigbee **coordinator** on a stable `/dev/serial/by-id/...` path. The service
   will not stay up without one.
@@ -39,6 +41,7 @@ git tag and run it under systemd. The role:
 | Variable | Default | Description |
 |---|---|---|
 | `zigbee2mqtt_version` | `2.10.1` | Z2M git tag to deploy. |
+| `zigbee2mqtt_node_major` | `22` | Node.js major version installed from NodeSource. |
 | `zigbee2mqtt_serial_adapter` | `zstack` | `zstack` (CC2652) or `ember` (EFR32). |
 | `zigbee2mqtt_channel` | `20` | Zigbee channel — **set before first pairing**. |
 | `zigbee2mqtt_network_key` | `GENERATE` | Network key or `GENERATE`. |

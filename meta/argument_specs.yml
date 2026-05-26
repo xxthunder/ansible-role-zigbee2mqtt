@@ -42,6 +42,13 @@ argument_specs:
         type: str
         description: Zigbee2MQTT git repository URL.
 
+      zigbee2mqtt_node_major:
+        type: str
+        description:
+          - Node.js major version installed from NodeSource. Z2M 2.x
+            requires Node 22+; Debian 13 ships Node 20, so the distro
+            package is too old.
+
       zigbee2mqtt_user:
         type: str
         description: Service user.
