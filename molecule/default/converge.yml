@@ -1,6 +1,6 @@
 ---
 # Exercised by `molecule syntax` (syntax-check only — see molecule.yml). Doubles
-# as a worked example of the role's required variables.
+# as a worked example of the role's required variables, including TLS.
 - name: Converge
   hosts: all
   become: true
@@ -12,3 +12,8 @@
         zigbee2mqtt_serial_port: "/dev/serial/by-id/usb-Example_Zigbee_Dongle-if00-port0"
         zigbee2mqtt_mqtt_user: zigbee2mqtt
         zigbee2mqtt_mqtt_password: example
+        zigbee2mqtt_mqtt_server: "mqtts://localhost:8883"
+        zigbee2mqtt_mqtt_ca: /opt/zigbee2mqtt/data/tls/ca.crt
+        zigbee2mqtt_frontend_port: 8443
+        zigbee2mqtt_frontend_ssl_cert: /opt/zigbee2mqtt/data/tls/frontend.pem
+        zigbee2mqtt_frontend_ssl_key: /opt/zigbee2mqtt/data/tls/frontend.key

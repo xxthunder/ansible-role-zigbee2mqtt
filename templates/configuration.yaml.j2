@@ -5,11 +5,18 @@ frontend:
   enabled: {{ zigbee2mqtt_frontend_enabled | ternary('true', 'false') }}
   port: {{ zigbee2mqtt_frontend_port }}
   host: {{ zigbee2mqtt_frontend_host }}
+{% if zigbee2mqtt_frontend_ssl_cert and zigbee2mqtt_frontend_ssl_key %}
+  ssl_cert: {{ zigbee2mqtt_frontend_ssl_cert }}
+  ssl_key: {{ zigbee2mqtt_frontend_ssl_key }}
+{% endif %}
 mqtt:
   base_topic: {{ zigbee2mqtt_mqtt_base_topic }}
   server: {{ zigbee2mqtt_mqtt_server }}
   user: {{ zigbee2mqtt_mqtt_user }}
   password: {{ zigbee2mqtt_mqtt_password }}
+{% if zigbee2mqtt_mqtt_ca %}
+  ca: {{ zigbee2mqtt_mqtt_ca }}
+{% endif %}
 serial:
   port: {{ zigbee2mqtt_serial_port }}
   adapter: {{ zigbee2mqtt_serial_adapter }}

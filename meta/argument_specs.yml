@@ -84,11 +84,21 @@ argument_specs:
 
       zigbee2mqtt_mqtt_server:
         type: str
-        description: MQTT broker URL (e.g. mqtt://localhost:1883).
+        description:
+          - MQTT broker URL. Use mqtt:// for plaintext or mqtts:// for TLS;
+            with mqtts://, set zigbee2mqtt_mqtt_ca to validate the broker
+            cert.
 
       zigbee2mqtt_mqtt_base_topic:
         type: str
         description: MQTT base topic.
+
+      zigbee2mqtt_mqtt_ca:
+        type: str
+        description:
+          - Path on the host to the CA file that signs the broker cert.
+            Empty disables CA validation; non-empty turns on broker-cert
+            verification. Combine with an mqtts:// URL.
 
       zigbee2mqtt_frontend_enabled:
         type: bool
@@ -101,6 +111,19 @@ argument_specs:
       zigbee2mqtt_frontend_host:
         type: str
         description: Frontend bind address.
+
+      zigbee2mqtt_frontend_ssl_cert:
+        type: str
+        description:
+          - Path on the host to the frontend's TLS certificate (PEM). Set
+            alongside zigbee2mqtt_frontend_ssl_key to enable HTTPS; leave
+            both empty for plain HTTP.
+
+      zigbee2mqtt_frontend_ssl_key:
+        type: str
+        description:
+          - Path on the host to the frontend's TLS private key (PEM). See
+            zigbee2mqtt_frontend_ssl_cert.
 
       zigbee2mqtt_homeassistant:
         type: bool

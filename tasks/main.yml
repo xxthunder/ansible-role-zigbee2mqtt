@@ -4,6 +4,17 @@
 # in the consuming play). The service connects to the coordinator on first
 # start, so a working serial port and MQTT broker are needed for it to stay up.
 
+- name: Assert frontend ssl_cert and ssl_key are set together
+  # z2m enables HTTPS by the presence of both. Half-set is a silent foot-gun
+  # (it'd just serve plain HTTP and the user wouldn't know), so fail fast.
+  ansible.builtin.assert:
+    that:
+      - (zigbee2mqtt_frontend_ssl_cert | length > 0) ==
+        (zigbee2mqtt_frontend_ssl_key  | length > 0)
+    fail_msg: >-
+      zigbee2mqtt_frontend_ssl_cert and zigbee2mqtt_frontend_ssl_key must
+      either both be set (HTTPS) or both empty (HTTP) — not one of each.
+
 - name: Install prerequisites
   ansible.builtin.apt:
     name:

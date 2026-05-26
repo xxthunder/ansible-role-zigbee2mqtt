@@ -24,15 +24,22 @@ zigbee2mqtt_pan_id: "GENERATE"
 zigbee2mqtt_ext_pan_id: "GENERATE"
 
 # MQTT broker. Required user/password — supply via the consumer's vault.
+# For MQTTS, switch the URL scheme to mqtts:// (e.g. mqtts://localhost:8883)
+# and set zigbee2mqtt_mqtt_ca to the CA file that signs the broker cert.
 zigbee2mqtt_mqtt_server: "mqtt://localhost:1883"
 zigbee2mqtt_mqtt_base_topic: "zigbee2mqtt"
 zigbee2mqtt_mqtt_user: ""
 zigbee2mqtt_mqtt_password: ""
+zigbee2mqtt_mqtt_ca: ""
 
-# Web frontend.
+# Web frontend. Leave both ssl_* paths empty for plain HTTP; set both for
+# HTTPS — z2m enables TLS by their presence. Paths point at files the caller
+# has already laid down on the host; the role does not ship cert material.
 zigbee2mqtt_frontend_enabled: true
 zigbee2mqtt_frontend_port: 8080
 zigbee2mqtt_frontend_host: "0.0.0.0"
+zigbee2mqtt_frontend_ssl_cert: ""
+zigbee2mqtt_frontend_ssl_key: ""
 
 # Home Assistant MQTT discovery (leave off unless HA also consumes the bus).
 zigbee2mqtt_homeassistant: false
