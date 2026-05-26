@@ -3,11 +3,20 @@
 zigbee2mqtt_version: "2.10.1"
 zigbee2mqtt_repo: "https://github.com/Koenkk/zigbee2mqtt.git"
 
-# Install layout. The source tree (base_dir) is root-owned and read by the
-# service user; the data dir (config + state) is owned by the service user.
+# Install layout. base_dir holds the cloned Zigbee2MQTT source tree + pnpm
+# build artefacts (root-owned, read by the service user). data_dir is the
+# runtime state — configuration.yaml, devices.yaml, the SQLite database,
+# any TLS cert material — surfaced to z2m via the ZIGBEE2MQTT_DATA env var
+# the systemd unit sets, and owned by the service user.
+#
+# Both sit under a single project-named umbrella in /opt/zigbee2mqtt/ so
+# related artefacts cluster naturally. base_dir and data_dir are siblings,
+# not parent/child, so the caller can pre-stage material under data_dir/
+# (e.g. TLS certs under data/tls/) without making base_dir non-empty —
+# ansible.builtin.git refuses to clone into a non-empty directory.
 zigbee2mqtt_user: zigbee2mqtt
 zigbee2mqtt_group: zigbee2mqtt
-zigbee2mqtt_base_dir: /opt/zigbee2mqtt
+zigbee2mqtt_base_dir: /opt/zigbee2mqtt/base
 zigbee2mqtt_data_dir: /opt/zigbee2mqtt/data
 zigbee2mqtt_service: zigbee2mqtt
 
