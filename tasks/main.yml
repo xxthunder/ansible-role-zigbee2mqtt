@@ -131,6 +131,23 @@
   changed_when: true
   notify: Restart zigbee2mqtt
 
+- name: Audit npm dependencies for high-severity issues
+  # Informational only — z2m's --frozen-lockfile already pins every
+  # transitive dep, but pnpm audit surfaces CVEs disclosed since the
+  # z2m tag we're pinned to was cut, giving the operator a paper trail
+  # at deploy time. The real fix when something turns up is bumping
+  # zigbee2mqtt_version after reviewing the lockfile diff.
+  ansible.builtin.command:
+    cmd: pnpm audit --audit-level=high
+    chdir: "{{ zigbee2mqtt_base_dir }}"
+  register: zigbee2mqtt_audit
+  changed_when: false
+  failed_when: false
+
+- name: Show pnpm audit summary
+  ansible.builtin.debug:
+    msg: "{{ zigbee2mqtt_audit.stdout_lines | default(['(no audit output)']) }}"
+
 - name: Build Zigbee2MQTT  # noqa: no-handler
   ansible.builtin.command:
     cmd: pnpm build
