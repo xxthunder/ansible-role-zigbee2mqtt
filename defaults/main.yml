@@ -56,6 +56,13 @@ zigbee2mqtt_frontend_host: "0.0.0.0"
 zigbee2mqtt_frontend_ssl_cert: ""
 zigbee2mqtt_frontend_ssl_key: ""
 
+# Frontend authentication: a single shared bearer token (z2m's native
+# frontend.auth_token). Empty ⇒ no auth (open frontend), preserving prior
+# behaviour; set ⇒ the UI, REST API, and websocket all require the token.
+# This is one shared secret, not per-user accounts — front the frontend with a
+# reverse proxy if you need real SSO. Source it from a vault, never hard-code.
+zigbee2mqtt_frontend_auth_token: ""
+
 # Home Assistant MQTT discovery (leave off unless HA also consumes the bus).
 zigbee2mqtt_homeassistant: false
 

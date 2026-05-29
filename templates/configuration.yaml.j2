@@ -9,6 +9,9 @@ frontend:
   ssl_cert: {{ zigbee2mqtt_frontend_ssl_cert }}
   ssl_key: {{ zigbee2mqtt_frontend_ssl_key }}
 {% endif %}
+{% if zigbee2mqtt_frontend_auth_token %}
+  auth_token: {{ zigbee2mqtt_frontend_auth_token }}
+{% endif %}
 mqtt:
   base_topic: {{ zigbee2mqtt_mqtt_base_topic }}
   server: {{ zigbee2mqtt_mqtt_server }}
