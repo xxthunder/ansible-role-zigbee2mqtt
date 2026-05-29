@@ -83,7 +83,9 @@
   # installed Node (Node major is the variable we control).
   ansible.builtin.command: npm install -g pnpm
   args:
-    creates: /usr/local/bin/pnpm
+    # NodeSource's npm prefix is /usr, so the global bin lands in /usr/bin
+    # (not /usr/local/bin) — guard on the real path so this is idempotent.
+    creates: /usr/bin/pnpm
 
 - name: Create the zigbee2mqtt group
   ansible.builtin.group:
@@ -286,6 +288,23 @@
       [user]
       	name = {{ zigbee2mqtt_data_git_user_name }}
       	email = {{ zigbee2mqtt_data_git_user_email }}
+
+- name: Allow root git operations on the service-owned data dir (repo mode)
+  # git 2.35.2+ refuses to act as root on a working tree owned by another user
+  # ("dubious ownership"). The data dir is owned by the service user, so mark it
+  # safe for the root operator's commits/pushes and the role's own git tasks.
+  # Distinct blockinfile marker so it coexists with the identity block above.
+  when: not zigbee2mqtt_manage_configuration
+  ansible.builtin.blockinfile:
+    path: "/root/.gitconfig"
+    create: true
+    owner: root
+    group: root
+    mode: "0644"
+    marker: "# {mark} ANSIBLE zigbee2mqtt safe.directory"
+    block: |
+      [safe]
+      	directory = {{ zigbee2mqtt_data_dir }}
 
 - name: Deploy secret.yaml from the vault (resolved via !secret in config)
   # Mode-independent: write it whenever secrets are supplied. Gitignored above.
