@@ -18,3 +18,21 @@
         zigbee2mqtt_frontend_ssl_cert: /opt/zigbee2mqtt/data/tls/frontend.pem
         zigbee2mqtt_frontend_ssl_key: /opt/zigbee2mqtt/data/tls/frontend.key
         zigbee2mqtt_frontend_auth_token: example-frontend-token
+
+    # Repo mode: role leaves configuration.yaml to the git-owned data dir and
+    # deploys secrets to secret.yaml. Worked example + syntax coverage.
+    - name: Configure Zigbee2MQTT in repo mode
+      ansible.builtin.include_role:
+        name: zigbee2mqtt
+      vars:
+        zigbee2mqtt_serial_port: "/dev/serial/by-id/usb-Example_Zigbee_Dongle-if00-port0"
+        zigbee2mqtt_mqtt_user: zigbee2mqtt
+        zigbee2mqtt_mqtt_password: example
+        zigbee2mqtt_manage_configuration: false
+        zigbee2mqtt_data_git_remote: "git@gitea.example:org/zigbee2mqtt-data.git"
+        zigbee2mqtt_data_git_user_name: "Ops Bot"
+        zigbee2mqtt_data_git_user_email: "ops@example.com"
+        zigbee2mqtt_secret:
+          network_key: [1, 2, 3]
+          mqtt_password: example
+          frontend_auth_token: example-frontend-token

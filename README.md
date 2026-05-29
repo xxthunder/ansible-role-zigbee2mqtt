@@ -50,6 +50,10 @@ git tag and run it under systemd. The role:
 | `zigbee2mqtt_frontend_enabled` / `_port` / `_host` | `true` / `8080` / `0.0.0.0` | Web frontend. |
 | `zigbee2mqtt_frontend_ssl_cert` / `_ssl_key` | `""` / `""` | Set both to enable HTTPS; leave both empty for HTTP. |
 | `zigbee2mqtt_frontend_auth_token` | `""` | Shared bearer token for the frontend (UI/API/websocket). Empty = open. Source from a vault. |
+| `zigbee2mqtt_manage_configuration` | `true` | `true` = template `configuration.yaml` (template mode); `false` = repo mode (role leaves config to the git-owned data dir). |
+| `zigbee2mqtt_data_git_remote` / `_branch` | `""` / `main` | Repo mode: SSH URL of the data-dir repo + branch. Empty disables git. Clones on first deploy; never auto-pulls after. |
+| `zigbee2mqtt_data_git_user_name` / `_email` | `""` / `""` | Repo mode: git identity written to `~/.gitconfig` so operator commits attribute correctly. |
+| `zigbee2mqtt_secret` | `{}` | Key/values rendered to `data/secret.yaml` (0640, gitignored), resolved in config via `!secret <key>`. Supply from a vault. |
 | `zigbee2mqtt_homeassistant` | `false` | Home Assistant MQTT discovery. |
 | `zigbee2mqtt_base_dir` / `_data_dir` | `/opt/zigbee2mqtt/base` / `/opt/zigbee2mqtt/data` | Source clone / runtime state. Siblings, not parent/child. |
 
@@ -82,6 +86,39 @@ at role start.
 > the play output. A real response is bumping `zigbee2mqtt_version` after
 > reviewing the lockfile diff.
 
+
+## Config ownership: template mode vs repo mode
+
+By default the role **templates `configuration.yaml`** from its vars (template
+mode). That's simple for greenfield, but the role then *owns* the file — and z2m
+rewrites its own `network_key`/`pan_id`/`ext_pan_id` and `devices:` map into that
+same file at runtime. So once devices are paired, a later re-render reverts that
+runtime state: the network identity resets (mesh loss) and friendly-names vanish.
+
+Set `zigbee2mqtt_manage_configuration: false` for **repo mode**: the data dir is
+owned by a git repo, the role never writes `configuration.yaml`, and secrets come
+from a vault-deployed `secret.yaml` referenced via z2m's `!secret`. The role
+cannot clobber runtime state because it never touches the config. The committed
+`configuration.yaml` keeps device/group state in external `devices.yaml`/
+`groups.yaml` and pulls secrets from `secret.yaml`:
+
+```yaml
+# configuration.yaml (committed to the data repo)
+mqtt:
+  password: !secret mqtt_password
+advanced:
+  network_key: !secret network_key
+frontend:
+  auth_token: !secret frontend_auth_token
+devices: devices.yaml
+groups: groups.yaml
+```
+
+> **First deploy** bootstraps the data dir from `zigbee2mqtt_data_git_remote`
+> (init+fetch+checkout, tolerant of pre-staged `tls/`); it **never pulls again**
+> — the host is the source of truth at runtime, so you push config changes from
+> the host. An already-populated host (e.g. migrated by hand) just skips the
+> bootstrap.
 
 ## Example Playbook
 
@@ -116,6 +153,27 @@ placed on the host:
     zigbee2mqtt_frontend_port: 8443
     zigbee2mqtt_frontend_ssl_cert: /opt/zigbee2mqtt/data/tls/frontend.pem
     zigbee2mqtt_frontend_ssl_key:  /opt/zigbee2mqtt/data/tls/frontend.key
+  roles:
+    - zigbee2mqtt
+```
+
+Repo mode — data dir owned by a git repo, secrets from the vault:
+
+```yaml
+- hosts: zigbee
+  become: true
+  vars:
+    zigbee2mqtt_serial_port: "/dev/serial/by-id/usb-Acme_Zigbee_Dongle-if00-port0"
+    zigbee2mqtt_mqtt_user: zigbee2mqtt
+    zigbee2mqtt_mqtt_password: "{{ vault_mqtt_zigbee2mqtt_password }}"  # unused for config in repo mode, still required by the spec
+    zigbee2mqtt_manage_configuration: false
+    zigbee2mqtt_data_git_remote: "git@gitea.example:org/zigbee2mqtt-data.git"
+    zigbee2mqtt_data_git_user_name: "Ops Bot"
+    zigbee2mqtt_data_git_user_email: "ops@example.com"
+    zigbee2mqtt_secret:
+      network_key: "{{ vault_zigbee2mqtt_network_key }}"
+      mqtt_password: "{{ vault_mqtt_zigbee2mqtt_password }}"
+      frontend_auth_token: "{{ vault_zigbee2mqtt_frontend_token }}"
   roles:
     - zigbee2mqtt
 ```

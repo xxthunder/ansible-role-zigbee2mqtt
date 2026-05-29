@@ -68,3 +68,39 @@ zigbee2mqtt_homeassistant: false
 
 # Logging.
 zigbee2mqtt_log_level: info
+
+# -----------------------------------------------------------------------------
+# Config ownership mode.
+#
+# true  (default) — TEMPLATE MODE: the role renders configuration.yaml from the
+#                   vars above. Simple for greenfield, but the role then OWNS
+#                   the file — and z2m rewrites its own network_key/pan_id/
+#                   ext_pan_id and devices map into it at runtime, so a later
+#                   re-render reverts that runtime state (mesh reset). Fine
+#                   until the first device is paired.
+# false           — REPO MODE: the role does NOT touch configuration.yaml. The
+#                   data dir is owned by a git repo (cloned on first deploy);
+#                   secrets come from a vault-deployed secret.yaml (see below)
+#                   referenced via z2m's `!secret`. The role can't clobber
+#                   runtime state because it never writes the config.
+zigbee2mqtt_manage_configuration: true
+
+# Repo mode wiring. data_git_remote empty ⇒ no git involvement.
+# On first deploy (empty data dir) the role clones the remote; on an already
+# populated dir it only ensures `origin` points at the remote and NEVER pulls
+# (the host is the source of truth at runtime — pulling could clobber a live
+# devices.yaml mid-pairing). Use an SSH URL so push works via agent forwarding.
+zigbee2mqtt_data_git_remote: ""
+zigbee2mqtt_data_git_branch: "main"
+
+# Git commit identity written to the service user's ~/.gitconfig so operator
+# commits from the host attribute correctly (otherwise they show as root@host).
+# Both empty ⇒ the role leaves ~/.gitconfig alone.
+zigbee2mqtt_data_git_user_name: ""
+zigbee2mqtt_data_git_user_email: ""
+
+# Secrets rendered to {{ data_dir }}/secret.yaml (mode 0640, gitignored),
+# resolved in configuration.yaml via z2m's `!secret <key>`. Empty ⇒ no
+# secret.yaml is written. Typical keys: network_key, mqtt_password,
+# frontend_auth_token. Supply the values from the consumer's vault.
+zigbee2mqtt_secret: {}

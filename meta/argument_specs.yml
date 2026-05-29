@@ -149,3 +149,43 @@ argument_specs:
       zigbee2mqtt_log_level:
         type: str
         description: Zigbee2MQTT log level.
+
+      # --- Config ownership / repo mode -------------------------------------
+
+      zigbee2mqtt_manage_configuration:
+        type: bool
+        description:
+          - When true (default) the role templates configuration.yaml
+            (template mode). When false (repo mode) the role does not touch
+            configuration.yaml — the git-owned data dir owns it — so z2m's
+            runtime-managed network_key/devices state is never clobbered.
+
+      zigbee2mqtt_data_git_remote:
+        type: str
+        description:
+          - Repo mode only. SSH URL of the data-dir git repo. Empty disables
+            git involvement. On first deploy (no configuration.yaml) the role
+            bootstraps the dir from this remote; it never auto-pulls after.
+
+      zigbee2mqtt_data_git_branch:
+        type: str
+        description: Repo mode branch to track (default main).
+
+      zigbee2mqtt_data_git_user_name:
+        type: str
+        description:
+          - Repo mode. git user.name written to the host's ~/.gitconfig so
+            operator commits attribute correctly. Empty leaves it alone.
+
+      zigbee2mqtt_data_git_user_email:
+        type: str
+        description: Repo mode. git user.email for operator commits.
+
+      zigbee2mqtt_secret:
+        type: dict
+        no_log: true
+        description:
+          - Key/value secrets rendered to data/secret.yaml (mode 0640,
+            gitignored) and resolved in configuration.yaml via z2m's
+            `!secret <key>`. Typical keys network_key, mqtt_password,
+            frontend_auth_token. Supply values from the consumer's vault.

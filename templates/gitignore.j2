@@ -1,0 +1,23 @@
+# Managed by ansible-role-zigbee2mqtt.
+# Keeps secrets and transient/binary runtime state out of the data repo;
+# human-meaningful config (configuration.yaml, devices.yaml, groups.yaml,
+# scenes.yaml) is committed.
+
+# Secrets — deployed by Ansible from the vault, never committed.
+secret.yaml
+
+# SQLite state DB + WAL/shm sidecars.
+database.db
+database.db-*
+*.db
+*.db-*
+
+# Transient runtime state.
+state.json
+log/
+
+# Binary coordinator backup — separately backed up, not git-friendly.
+coordinator_backup.json
+
+# TLS material — managed by certify.yml / the deploy play, not the data repo.
+tls/
