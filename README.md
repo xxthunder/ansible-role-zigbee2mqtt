@@ -49,6 +49,7 @@ git tag and run it under systemd. The role:
 | `zigbee2mqtt_mqtt_ca` | `""` | Path to CA file for broker-cert validation; empty disables. |
 | `zigbee2mqtt_frontend_enabled` / `_port` / `_host` | `true` / `8080` / `0.0.0.0` | Web frontend. |
 | `zigbee2mqtt_frontend_ssl_cert` / `_ssl_key` | `""` / `""` | Set both to enable HTTPS; leave both empty for HTTP. |
+| `zigbee2mqtt_frontend_auth_token` | `""` | Shared bearer token for the frontend (UI/API/websocket). Empty = open. Source from a vault. |
 | `zigbee2mqtt_homeassistant` | `false` | Home Assistant MQTT discovery. |
 | `zigbee2mqtt_base_dir` / `_data_dir` | `/opt/zigbee2mqtt/base` / `/opt/zigbee2mqtt/data` | Source clone / runtime state. Siblings, not parent/child. |
 
@@ -64,6 +65,13 @@ at role start.
 > variables at them (`zigbee2mqtt_mqtt_ca` for broker validation,
 > `zigbee2mqtt_frontend_ssl_cert`/`_key` for the HTTPS frontend). HTTPS is
 > enabled by the *presence* of both frontend paths — empty both = HTTP.
+
+> **Frontend auth:** `zigbee2mqtt_frontend_auth_token` is z2m's native single
+> shared bearer token. Set it (from a vault) and the UI, REST API, and
+> websocket all require the token; leave it empty for an open frontend. It is
+> one shared secret, not per-user accounts — front the frontend with a reverse
+> proxy if you need real SSO. Orthogonal to TLS: HTTPS encrypts the channel,
+> the token gates access.
 
 > **Supply-chain note:** the role runs `pnpm audit --audit-level=high`
 > after the dependency install and prints the summary, non-blocking. With

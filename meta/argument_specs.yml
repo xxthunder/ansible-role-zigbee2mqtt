@@ -132,6 +132,16 @@ argument_specs:
           - Path on the host to the frontend's TLS private key (PEM). See
             zigbee2mqtt_frontend_ssl_cert.
 
+      zigbee2mqtt_frontend_auth_token:
+        type: str
+        # no_log: this is a secret bearer token; keep it out of play output.
+        no_log: true
+        description:
+          - Shared bearer token protecting the web frontend (z2m's native
+            frontend.auth_token). Empty (default) leaves the frontend open;
+            set it to require the token on the UI, REST API, and websocket.
+            Single shared secret, not per-user auth — source it from a vault.
+
       zigbee2mqtt_homeassistant:
         type: bool
         description: Enable Home Assistant MQTT discovery.

@@ -17,3 +17,4 @@
         zigbee2mqtt_frontend_port: 8443
         zigbee2mqtt_frontend_ssl_cert: /opt/zigbee2mqtt/data/tls/frontend.pem
         zigbee2mqtt_frontend_ssl_key: /opt/zigbee2mqtt/data/tls/frontend.key
+        zigbee2mqtt_frontend_auth_token: example-frontend-token
