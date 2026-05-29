@@ -7,6 +7,8 @@
 - name: Assert frontend ssl_cert and ssl_key are set together
   # z2m enables HTTPS by the presence of both. Half-set is a silent foot-gun
   # (it'd just serve plain HTTP and the user wouldn't know), so fail fast.
+  # Only relevant in template mode; in repo mode the committed config owns this.
+  when: zigbee2mqtt_manage_configuration
   ansible.builtin.assert:
     that:
       - (zigbee2mqtt_frontend_ssl_cert | length > 0) ==
@@ -178,7 +180,14 @@
   changed_when: true
   notify: Restart zigbee2mqtt
 
-- name: Deploy configuration.yaml
+# --- Config ownership: template mode vs repo mode -----------------------------
+# Template mode (default): the role renders configuration.yaml. Repo mode
+# (zigbee2mqtt_manage_configuration=false): the data dir is git-owned, so the
+# role must NOT write configuration.yaml — z2m's runtime-managed network_key/
+# devices state lives there and would be clobbered. See defaults/main.yml.
+
+- name: Deploy configuration.yaml (template mode)
+  when: zigbee2mqtt_manage_configuration
   ansible.builtin.template:
     src: configuration.yaml.j2
     dest: "{{ zigbee2mqtt_data_dir }}/configuration.yaml"
@@ -186,6 +195,109 @@
     group: "{{ zigbee2mqtt_group }}"
     mode: "0640"
   notify: Restart zigbee2mqtt
+
+- name: Stat configuration.yaml (repo mode — decides first-deploy bootstrap)
+  when: not zigbee2mqtt_manage_configuration
+  ansible.builtin.stat:
+    path: "{{ zigbee2mqtt_data_dir }}/configuration.yaml"
+  register: zigbee2mqtt_cfg
+
+- name: Bootstrap the data dir from the git remote on first deploy (repo mode)
+  # init+fetch+checkout (not `git clone`) so it works even though the playbook
+  # pre-stages TLS material under data/tls/ — clone refuses a non-empty dest,
+  # this overlays the repo onto it. Runs once: skipped as soon as
+  # configuration.yaml exists. Never fetches again afterwards — the host is the
+  # source of truth at runtime (HSH-038), so no auto-pull can clobber a live
+  # devices.yaml. Greenfield/disaster-recovery only; an already-seeded host
+  # (e.g. migrated by hand) just skips this.
+  when:
+    - not zigbee2mqtt_manage_configuration
+    - zigbee2mqtt_data_git_remote | length > 0
+    - not zigbee2mqtt_cfg.stat.exists
+  ansible.builtin.shell:
+    cmd: |
+      set -euo pipefail
+      cd {{ zigbee2mqtt_data_dir | quote }}
+      git init -q
+      git remote add origin {{ zigbee2mqtt_data_git_remote | quote }} \
+        2>/dev/null || git remote set-url origin {{ zigbee2mqtt_data_git_remote | quote }}
+      git fetch -q --depth 1 origin {{ zigbee2mqtt_data_git_branch | quote }}
+      git checkout -q -f -B {{ zigbee2mqtt_data_git_branch | quote }} FETCH_HEAD
+    executable: /bin/bash
+  changed_when: true
+  notify: Restart zigbee2mqtt
+
+- name: Ensure data dir ownership after bootstrap (repo mode)
+  when:
+    - not zigbee2mqtt_manage_configuration
+    - zigbee2mqtt_data_git_remote | length > 0
+    - not zigbee2mqtt_cfg.stat.exists
+  ansible.builtin.file:
+    path: "{{ zigbee2mqtt_data_dir }}"
+    owner: "{{ zigbee2mqtt_user }}"
+    group: "{{ zigbee2mqtt_group }}"
+    recurse: true
+
+- name: Stat data dir .git (repo mode — gate origin-URL upkeep)
+  when: not zigbee2mqtt_manage_configuration
+  ansible.builtin.stat:
+    path: "{{ zigbee2mqtt_data_dir }}/.git"
+  register: zigbee2mqtt_dotgit
+
+- name: Keep origin pointed at the data repo (repo mode, already a git repo)  # noqa: command-instead-of-module
+  # No fetch/pull — only corrects the remote URL if it drifts. Safe on a live
+  # host because it never touches the working tree. The git module can't set a
+  # remote URL without also cloning/pulling, which is exactly what we must not
+  # do here, so a bare `git remote set-url` is the right tool.
+  when:
+    - not zigbee2mqtt_manage_configuration
+    - zigbee2mqtt_data_git_remote | length > 0
+    - zigbee2mqtt_dotgit.stat.exists
+  ansible.builtin.command:
+    cmd: git -C {{ zigbee2mqtt_data_dir }} remote set-url origin {{ zigbee2mqtt_data_git_remote }}
+  register: zigbee2mqtt_origin
+  changed_when: false
+  failed_when: false
+
+- name: Template .gitignore into the data dir (repo mode)
+  # Keeps secrets and transient/binary state out of the committed repo.
+  when: not zigbee2mqtt_manage_configuration
+  ansible.builtin.template:
+    src: gitignore.j2
+    dest: "{{ zigbee2mqtt_data_dir }}/.gitignore"
+    owner: "{{ zigbee2mqtt_user }}"
+    group: "{{ zigbee2mqtt_group }}"
+    mode: "0644"
+
+- name: Configure operator git commit identity (repo mode)
+  # Commits pushed from the host (operator over SSH, become root) otherwise
+  # attribute to root@<host>. Non-destructive — blockinfile, not a full rewrite.
+  when:
+    - not zigbee2mqtt_manage_configuration
+    - zigbee2mqtt_data_git_user_name | length > 0
+    - zigbee2mqtt_data_git_user_email | length > 0
+  ansible.builtin.blockinfile:
+    path: "/root/.gitconfig"
+    create: true
+    owner: root
+    group: root
+    mode: "0644"
+    block: |
+      [user]
+      	name = {{ zigbee2mqtt_data_git_user_name }}
+      	email = {{ zigbee2mqtt_data_git_user_email }}
+
+- name: Deploy secret.yaml from the vault (resolved via !secret in config)
+  # Mode-independent: write it whenever secrets are supplied. Gitignored above.
+  when: zigbee2mqtt_secret | length > 0
+  ansible.builtin.template:
+    src: secret.yaml.j2
+    dest: "{{ zigbee2mqtt_data_dir }}/secret.yaml"
+    owner: "{{ zigbee2mqtt_user }}"
+    group: "{{ zigbee2mqtt_group }}"
+    mode: "0640"
+  notify: Restart zigbee2mqtt
+  no_log: true
 
 - name: Install the systemd unit
   ansible.builtin.template:
